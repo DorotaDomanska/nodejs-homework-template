@@ -1,4 +1,16 @@
 const service = require("../service");
+const Joi = require("joi");
+
+const contactSchema = Joi.object({
+  name: Joi.string().alphanum().min(3).max(30).required(),
+  email: Joi.string()
+    .email({
+      minDomainSegments: 2,
+    })
+    .required(),
+  phone: Joi.string().min(14).max(20).required(),
+  favorite: Joi.boolean(),
+});
 
 const get = async (req, res, next) => {
   try {
@@ -42,8 +54,8 @@ const getById = async (req, res, next) => {
 
 const create = async (req, res, next) => {
   const { name, email, phone } = req.body;
-  if (!name || !email || !phone)
-    return res.status(400).json({ message: "missing required field" });
+  const { error } = contactSchema.validate({ name, email, phone });
+  if (error) return res.status(400).json({ message: "missing required field" });
   try {
     const result = await service.createContact({ name, email, phone });
     res.status(201).json({
@@ -60,8 +72,8 @@ const create = async (req, res, next) => {
 const update = async (req, res, next) => {
   const { contactId } = req.params;
   const { name, email, phone } = req.body;
-  if (!name && !email && !phone)
-    return res.status(400).json({ message: "missing fields" });
+  const { error } = contactSchema.validate({ name, email, phone });
+  if (error) return res.status(400).json({ message: "missing required field" });
   try {
     const result = await service.updateContact(contactId, {
       name,
@@ -91,8 +103,8 @@ const update = async (req, res, next) => {
 const updateStatusContact = async (req, res, next) => {
   const { contactId } = req.params;
   const { favorite = false } = req.body;
-  if (!favorite)
-    return res.status(400).json({ message: "missing field favorite" });
+  const { error } = contactSchema.validate({ favorite });
+  if (error) return res.status(400).json({ message: "missing field favorite" });
   try {
     const result = await service.updateContact(contactId, { favorite });
     if (result) {
