@@ -1,5 +1,9 @@
 const service = require("../service");
 const Joi = require("joi");
+const User = require("../service/schemas/user");
+const jwt = require("jsonwebtoken");
+require("dotenv").config();
+const secret = process.env.JWT_SECRET;
 
 const contactSchema = Joi.object({
   name: Joi.string().alphanum().min(3).max(30).required(),
@@ -152,6 +156,114 @@ const remove = async (req, res, next) => {
   }
 };
 
+const userSchema = Joi.object({
+  email: Joi.string()
+    .email({
+      minDomainSegments: 2,
+    })
+    .required(),
+  password: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")),
+});
+
+const createUser = async (req, res, next) => {
+  const { email, password } = req.body;
+  const { error } = userSchema.validate({ email, password });
+  if (error)
+    return res.status(400).json({ message: "Incorrect login or password" });
+  const user = await service.checkUser({ email });
+  if (user) {
+    return res.status(409).json({
+      status: "error",
+      code: 409,
+      message: "Email is already in use",
+      data: "Conflict",
+    });
+  }
+  try {
+    const newUser = new User({ email });
+    newUser.setPassword(password);
+    await newUser.save();
+    res.status(201).json({
+      status: "success",
+      code: 201,
+      data: {
+        message: "Registration successful",
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const login = async (req, res, next) => {
+  const { email, password } = req.body;
+  const { error } = userSchema.validate({ email, password });
+  if (error)
+    return res.status(400).json({ message: "Incorrect login or password" });
+  const user = await service.checkUser({ email });
+
+  if (!user || !user.validPassword(password)) {
+    return res.status(400).json({
+      status: "error",
+      code: 401,
+      message: "Email or password is wrong",
+      data: "Unauthorized",
+    });
+  }
+
+  const payload = {
+    id: user._id,
+  };
+
+  const token = jwt.sign(payload, secret, { expiresIn: "1h" });
+  res.json({
+    status: "success",
+    code: 200,
+    data: {
+      token,
+      user: {
+        email: user.email,
+        subscription: user.subscription,
+      },
+    },
+  });
+};
+
+const logout = async (req, res, next) => {
+  const { email } = req.user;
+  try {
+    await service.removeToken({ email });
+    res.json({
+      status: "success",
+      code: 204,
+      data: "No Content",
+    });
+  } catch (e) {
+    console.error(e);
+    next(e);
+  }
+};
+
+const getUser = async (req, res, next) => {
+  const { email } = req.user;
+  try {
+    const user = await service.getUser(email);
+    res.json({
+      status: "success",
+      code: 200,
+      data: {
+        user: {
+          email: user.email,
+          subscription: user.subscription,
+        },
+      },
+    });
+  } catch (e) {
+    console.error(e);
+    next(e);
+  }
+};
+
 module.exports = {
   get,
   getById,
@@ -159,4 +271,8 @@ module.exports = {
   update,
   updateStatusContact,
   remove,
+  createUser,
+  login,
+  logout,
+  getUser,
 };

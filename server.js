@@ -13,6 +13,8 @@ app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
 
+require("./config-passport");
+
 const contactsRouter = require("./routes/api/contacts.js");
 app.use("/api/contacts", contactsRouter);
 
