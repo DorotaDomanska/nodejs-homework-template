@@ -170,7 +170,7 @@ const createUser = async (req, res, next) => {
   const { error } = userSchema.validate({ email, password });
   if (error)
     return res.status(400).json({ message: "Incorrect login or password" });
-  const user = await service.checkUser({ email });
+  const user = await service.checkUser(email);
   if (user) {
     return res.status(409).json({
       status: "error",
@@ -230,9 +230,9 @@ const login = async (req, res, next) => {
 };
 
 const logout = async (req, res, next) => {
-  const { email } = req.user;
+  const { _id } = req.user;
   try {
-    await service.removeToken({ email });
+    await service.removeToken(_id, { token: "" });
     res.json({
       status: "success",
       code: 204,

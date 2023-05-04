@@ -25,9 +25,9 @@ const checkUser = (email) => {
   return User.findOne({ email });
 };
 
-const removeToken = (email) => {
-  return User.findByIdAndUpdate({ email, token: "" });
-}
+const removeToken = (id, fields) => {
+  return User.findByIdAndUpdate({ _id: id }, fields);
+};
 
 const getUser = (email) => {
   return User.findOne({ email });
