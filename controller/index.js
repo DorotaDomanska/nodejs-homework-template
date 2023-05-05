@@ -57,11 +57,11 @@ const getById = async (req, res, next) => {
 };
 
 const create = async (req, res, next) => {
-  const { name, email, phone } = req.body;
+  const { name, email, phone, owner } = req.body;
   const { error } = contactSchema.validate({ name, email, phone });
   if (error) return res.status(400).json({ message: "missing required field" });
   try {
-    const result = await service.createContact({ name, email, phone });
+    const result = await service.createContact({ name, email, phone, owner });
     res.status(201).json({
       status: "success",
       code: 201,
@@ -200,7 +200,7 @@ const login = async (req, res, next) => {
   const { error } = userSchema.validate({ email, password });
   if (error)
     return res.status(400).json({ message: "Incorrect login or password" });
-  const user = await service.checkUser({ email });
+  const user = await service.checkUser(email);
 
   if (!user || !user.validPassword(password)) {
     return res.status(400).json({
