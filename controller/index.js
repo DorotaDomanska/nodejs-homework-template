@@ -57,11 +57,17 @@ const getById = async (req, res, next) => {
 };
 
 const create = async (req, res, next) => {
-  const { name, email, phone, owner } = req.body;
+  const { _id } = req.user;
+  const { name, email, phone } = req.body;
   const { error } = contactSchema.validate({ name, email, phone });
   if (error) return res.status(400).json({ message: "missing required field" });
   try {
-    const result = await service.createContact({ name, email, phone, owner });
+    const result = await service.createContact({
+      name,
+      email,
+      phone,
+      owner: _id,
+    });
     res.status(201).json({
       status: "success",
       code: 201,
