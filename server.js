@@ -17,7 +17,7 @@ require("./config-passport");
 
 const contactsRouter = require("./routes/api/contacts.js");
 app.use("/api/contacts", contactsRouter);
-const usersRouter = require("./routes/api/users.js");
+const { router: usersRouter } = require("./routes/api/users.js");
 app.use("/api/users", usersRouter);
 
 app.use((req, res) => {

@@ -36,5 +36,4 @@ router.get("/logout", auth, ctrlContact.logout);
 
 router.get("/current", auth, ctrlContact.getUser);
 
-module.exports = auth;
-module.exports = router;
+module.exports = { auth, router };
