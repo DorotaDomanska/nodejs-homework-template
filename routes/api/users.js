@@ -13,6 +13,16 @@ const auth = (req, res, next) => {
         data: "Unauthorized",
       });
     }
+    const authHeader = req.get("Authorization");
+    const token = authHeader.split(" ")[1];
+    if (token !== user.token) {
+      return res.status(401).json({
+        status: "error",
+        code: 401,
+        message: "Not authorized",
+        data: "Unauthorized",
+      });
+    }
     req.user = user;
     next();
   })(req, res, next);
