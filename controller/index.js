@@ -6,7 +6,7 @@ require("dotenv").config();
 const secret = process.env.JWT_SECRET;
 
 const contactSchema = Joi.object({
-  name: Joi.string().alphanum().min(3).max(30).required(),
+  name: Joi.string().min(3).max(30).required(),
   email: Joi.string()
     .email({
       minDomainSegments: 2,
@@ -60,7 +60,7 @@ const create = async (req, res, next) => {
   const { _id } = req.user;
   const { name, email, phone } = req.body;
   const { error } = contactSchema.validate({ name, email, phone });
-  if (error) return res.status(400).json({ message: "missing required field" });
+  if (error) return res.status(400).json({ message: error });
   try {
     const result = await service.createContact({
       name,
