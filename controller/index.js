@@ -3,8 +3,11 @@ const Joi = require("joi");
 const User = require("../service/schemas/user");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const path = require("path");
 const secret = process.env.JWT_SECRET;
 const gravatar = require("gravatar");
+const Jimp = require("jimp");
+const fs = require("fs").promises;
 
 const contactSchema = Joi.object({
   name: Joi.string().min(3).max(30).required(),
@@ -273,6 +276,28 @@ const getUser = async (req, res, next) => {
   }
 };
 
+const IMAGE_DIR = path.join(process.cwd(), "public", "avatars");
+
+const updateAvatar = async (req, res, next) => {
+  const { _id } = req.user;
+  const { path: temporaryName, originalname } = req.file;
+  Jimp.read(originalname, (err, img) => {
+    if (err) throw err;
+    img.resize(250, 250).write();
+  });
+  const targetFileName = path.join(IMAGE_DIR, [_id, originalname].join("_"));
+  try {
+    await fs.rename(temporaryName, targetFileName);
+    const newURL = await service.updateAvatar(_id, {
+      avatarURL: `${targetFileName}`,
+    });
+    res.json({ avatarURL: newURL, status: 200 });
+  } catch (err) {
+    await fs.unlink(temporaryName);
+    return next(err);
+  }
+};
+
 module.exports = {
   get,
   getById,
@@ -284,4 +309,5 @@ module.exports = {
   login,
   logout,
   getUser,
+  updateAvatar,
 };
