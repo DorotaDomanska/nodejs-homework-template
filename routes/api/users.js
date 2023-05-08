@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const ctrlContact = require("../../controller");
 const passport = require("passport");
+const upload = require("../../upload");
 
 const auth = (req, res, next) => {
   passport.authenticate("jwt", { session: false }, (err, user) => {
@@ -35,5 +36,12 @@ router.post("/login", ctrlContact.login);
 router.get("/logout", auth, ctrlContact.logout);
 
 router.get("/current", auth, ctrlContact.getUser);
+
+router.patch(
+  "/avatars",
+  auth,
+  upload.single("avatar"),
+  ctrlContact.updateAvatar
+);
 
 module.exports = { auth, router };
