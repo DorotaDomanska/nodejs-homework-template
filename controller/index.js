@@ -242,6 +242,15 @@ const login = async (req, res, next) => {
     });
   }
 
+  if (user.verify === false) {
+    return res.status(401).json({
+      status: "error",
+      code: 401,
+      message: "User is not verify",
+      data: "Unauthorized",
+    });
+  }
+
   const payload = {
     id: user._id,
   };
