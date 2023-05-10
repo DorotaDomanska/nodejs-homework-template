@@ -206,7 +206,7 @@ const createUser = async (req, res, next) => {
       from: "dorota@domanska.eu",
       to: [newUser.email],
       subject: "Verify your email",
-      text: `Hello, confirm your email address by clicking this link: http://localhost:3000/users/verify/${newUser.verificationToken}`,
+      text: `Hello, confirm your email address by clicking this link: http://localhost:3000/api/users/verify/${newUser.verificationToken}`,
     };
 
     sgMail
