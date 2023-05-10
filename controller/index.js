@@ -231,6 +231,7 @@ const login = async (req, res, next) => {
   const { error } = userSchema.validate({ email, password });
   if (error)
     return res.status(400).json({ message: "Incorrect login or password" });
+
   const user = await service.checkUser(email);
 
   if (!user || !user.validPassword(password)) {
@@ -357,6 +358,49 @@ const getUserVerification = async (req, res, next) => {
   }
 };
 
+const sendVerificationEmail = async (req, res, next) => {
+  const { email } = req.body;
+  if (!email)
+    return res.status(400).json({ message: "missing required field email" });
+
+  const { error } = userSchema.validate({ email });
+  if (error) return res.status(400).json({ message: error });
+
+  try {
+    const user = await service.checkUser(email);
+
+    if (user.verify === true)
+      return res
+        .status(400)
+        .json({ message: "Verification has already been passed" });
+
+    if (user.verify === false) {
+      const emailConfig = {
+        from: "dorota@domanska.eu",
+        to: [user.email],
+        subject: "Verify your email",
+        text: `Hello, confirm your email address by clicking this link: http://localhost:3000/api/users/verify/${user.verificationToken}`,
+      };
+
+      sgMail
+        .send(emailConfig)
+        .then((res) => console.log(res))
+        .catch((err) => console.log(err));
+
+      res.status(200).json({
+        status: "success",
+        code: 200,
+        data: {
+          message: "Verification email sent",
+        },
+      });
+    }
+  } catch (e) {
+    console.error(e);
+    next(e);
+  }
+};
+
 module.exports = {
   get,
   getById,
@@ -370,4 +414,5 @@ module.exports = {
   getUser,
   updateAvatar,
   getUserVerification,
+  sendVerificationEmail,
 };

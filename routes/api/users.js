@@ -46,4 +46,6 @@ router.patch(
 
 router.get("/verify/:verificationToken", ctrlContact.getUserVerification);
 
+router.post("/verify", ctrlContact.sendVerificationEmail);
+
 module.exports = { auth, router };
