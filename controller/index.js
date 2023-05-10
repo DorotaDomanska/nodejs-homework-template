@@ -322,7 +322,6 @@ const updateAvatar = async (req, res, next) => {
 
 const getUserVerification = async (req, res, next) => {
   const { verificationToken } = req.params;
-  console.log(verificationToken);
   try {
     const user = await service.getUserByVerificationToken(verificationToken);
     if (user) {
