@@ -8,6 +8,10 @@ const secret = process.env.JWT_SECRET;
 const gravatar = require("gravatar");
 const Jimp = require("jimp");
 const fs = require("fs").promises;
+const { v4: uuidv4 } = require("uuid");
+const sgMail = require("@sendgrid/mail");
+
+sgMail.setApiKey(process.env.SEND_GRID_PASSWORD);
 
 const contactSchema = Joi.object({
   name: Joi.string().min(3).max(30).required(),
@@ -190,9 +194,26 @@ const createUser = async (req, res, next) => {
     });
   }
   try {
-    const newUser = new User({ email, avatarURL: gravatar.url(email) });
+    const newUser = new User({
+      email,
+      avatarURL: gravatar.url(email),
+      verificationToken: uuidv4(),
+    });
     newUser.setPassword(password);
     await newUser.save();
+
+    const emailConfig = {
+      from: "dorota@domanska.eu",
+      to: [newUser.email],
+      subject: "Verify your email",
+      text: `Hello, confirm your email address by clicking this link: http://localhost:3000/users/verify/${newUser.verificationToken}`,
+    };
+
+    sgMail
+      .send(emailConfig)
+      .then((res) => console.log(res))
+      .catch((err) => console.log(err));
+
     res.status(201).json({
       status: "success",
       code: 201,
@@ -299,6 +320,35 @@ const updateAvatar = async (req, res, next) => {
   }
 };
 
+const getUserVerification = async (req, res, next) => {
+  const { verificationToken } = req.params;
+  console.log(verificationToken);
+  try {
+    const user = await service.getUserByVerificationToken(verificationToken);
+    if (user) {
+      await service.updateVerificationStatus(user._id, {
+        verificationToken: null,
+        verify: true,
+      });
+      res.json({
+        status: "success",
+        code: 200,
+        message: "Verification successful",
+      });
+    } else {
+      res.status(404).json({
+        status: "error",
+        code: 404,
+        message: "User not found",
+        data: "Not Found",
+      });
+    }
+  } catch (e) {
+    console.error(e);
+    next(e);
+  }
+};
+
 module.exports = {
   get,
   getById,
@@ -311,4 +361,5 @@ module.exports = {
   logout,
   getUser,
   updateAvatar,
+  getUserVerification,
 };
